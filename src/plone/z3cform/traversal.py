@@ -50,6 +50,20 @@ class FormWidgetTraversal(object):
     def _prepareForm(self):
         return self.context
 
+    def _removePrefix(self, form, name):
+
+        # If name begins with form.widgets., remove it
+        form_widgets_prefix = util.expandPrefix(form.prefix)+util.expandPrefix(form.widgets.prefix)
+        if name.startswith(form_widgets_prefix):
+            name = name[len(form_widgets_prefix):]
+
+        # also recursively remove prefixes for
+        # groups
+        for g in form.groups:
+            name = self._removePrefix(g, name)
+
+        return name
+
     def traverse(self, name, ignored):
 
         form = self._prepareForm()
@@ -60,10 +74,7 @@ class FormWidgetTraversal(object):
         form.update()
         noLongerProvides(self.request, IDeferSecurityCheck)
 
-        # If name begins with form.widgets., remove it
-        form_widgets_prefix = util.expandPrefix(form.prefix)+util.expandPrefix(form.widgets.prefix)
-        if name.startswith(form_widgets_prefix):
-            name = name[len(form_widgets_prefix):]
+        name = self._removePrefix(form, name)
 
         # Split string up into dotted segments and work through
         target = aq_base(form)
@@ -128,8 +139,11 @@ class FormWidgetTraversal(object):
         if getattr(aq_base(form), 'groups', None) is None:
             return None
         for group in form.groups:
-            if group.widgets and name in group.widgets:
-                return group.widgets.get(name)
+            target = self._form_traverse(group, name)
+            if target:
+                return target
+
+        return None
 
 
 class WrapperWidgetTraversal(FormWidgetTraversal):

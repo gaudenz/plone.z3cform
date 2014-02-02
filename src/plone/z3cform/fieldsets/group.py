@@ -19,9 +19,10 @@ class Group(group.Group):
 class GroupFactory(object):
     implements(IGroupFactory)
 
-    def __init__(self, __name__, fields, label=None, description=None):
+    def __init__(self, __name__, fields, groups=None, label=None, description=None):
         self.__name__ = __name__
         self.fields = fields
+        self.groups = groups
 
         self.label = label or __name__
         self.description = description
@@ -32,4 +33,6 @@ class GroupFactory(object):
         g.label = self.label
         g.description = self.description
         g.fields = self.fields
+        if self.groups:
+            g.groups = self.groups
         return g
